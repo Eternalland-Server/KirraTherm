@@ -11,7 +11,6 @@ import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
 import taboolib.common.platform.command.mainCommand
 import taboolib.common.platform.command.subCommand
-import taboolib.common.platform.event.SubscribeEvent
 import taboolib.expansion.createHelper
 import taboolib.module.chat.colored
 
@@ -38,7 +37,7 @@ object Commands {
         dynamic(commit = "type") {
             dynamic(commit = "name") {
                 execute<Player> { player, context, _ ->
-                    val type = when (context.get(1).lowercase()) {
+                    val type = when (context.get(0).lowercase()) {
                         "cube" -> ThermInternal.ThermType.CUBE
                         "standalone" -> ThermInternal.ThermType.STANDALONE_SEAT
                         "player" -> ThermInternal.ThermType.PLAYER_SEAT
@@ -56,7 +55,7 @@ object Commands {
                         }
                         ThermInternal(type, selectPointsList[0], selectPointsList[1])
                     }
-                    val name = context.get(2)
+                    val name = context.get(1)
                     if (Therm.getByName(name) != null) {
                         player.sendMessage("&c[System] &7该点位已存在.".colored())
                         return@execute
