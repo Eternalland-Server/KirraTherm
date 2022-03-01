@@ -1,0 +1,35 @@
+settings:
+  # 泡点奖励间隔时间. (单位 = Tick)
+  therm-interval: 1200
+  # 泡点特效间隔时间. (单位 = Tick)
+  particle-interval: 150
+  # 恢复血量间隔时间. (单位 = Tick)
+  regen-interval: 100
+  action-message:
+    - "&6&l泡点增益"
+    - " "
+    - "&7金币: &f<金币> &a(+<金币-added>)"
+    - "&7点券: &f<点券> &a(+<点券-added>)"
+    - "&7神石: &f<神石> &a(+<神石-added>)"
+  generate-disable-worlds:
+    - "world_the_end"
+  # 权限倍率设置.
+  multiple-by-permission:
+    # 默认倍率
+    default:
+      金币: 1.0
+      点券: 0.5
+      神石: 0.2
+    # 以下权限从高到低排
+    admin:
+      金币: 10.0
+      点券: 7.0
+      神石: 5.0
+    gold-supporter:
+      金币: 7.0
+      点券: 3.0
+      神石: 1.5
+    coal-supporter:
+      金币: 3.0
+      点券: 1.0
+      神石: 0.8

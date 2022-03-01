@@ -1,0 +1,7 @@
+message-player-sits-on-seat: "&6&l➱ &e您坐在了 &f{0} &e座椅上!"
+message-player-join-therm: "&6&lKirraTherm &f&o> &e您进入了 &f{0}&e 温泉."
+message-player-quit-therm: "&6&lKirraTherm &f&o> &e您退出了 &f{0}&e 温泉."
+message-player-left-seat: "&6&lKirraTherm &f&o> &e您离开了 &f{0} &e座椅."
+message-player-already-sit: "&6&lKirraTherm &f&o> &e已经有人坐在这个位置上了!"
+message-player-already-have-vehicle: "&6&lKirraTherm &f&o> &e您已经处于骑乘状态了!"
+message-player-cant-summon-seat: "&6&lKirraTherm &f&o> &e您无法在当前世界召唤座椅!"
