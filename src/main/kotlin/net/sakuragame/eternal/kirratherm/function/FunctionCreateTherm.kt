@@ -7,6 +7,7 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common5.Baffle
+import taboolib.module.chat.colored
 import java.util.concurrent.TimeUnit
 
 object FunctionCreateTherm {
@@ -30,11 +31,11 @@ object FunctionCreateTherm {
             baffle.next(player.name)
             if (e.action == Action.LEFT_CLICK_BLOCK || e.action == Action.LEFT_CLICK_AIR) {
                 selectPointsList[0] = e.clickedBlock!!.location
-                player.sendMessage("&c[System] &7A 点已选中.")
+                player.sendMessage("&c[System] &7A 点已选中.".colored())
                 return
             }
             selectPointsList[1] = e.clickedBlock!!.location
-            player.sendMessage("&c[System] &7B 点已选中.")
+            player.sendMessage("&c[System] &7B 点已选中.".colored())
         }
     }
 }

@@ -6,6 +6,8 @@ import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm.selectPoin
 import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.ThermAPI
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
+import org.bukkit.Bukkit
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
@@ -35,9 +37,12 @@ object Commands {
     @CommandBody
     val create = subCommand {
         dynamic(commit = "type") {
+            suggestion<CommandSender> { _, _ ->
+                listOf("cube", "standalone", "player")
+            }
             dynamic(commit = "name") {
                 execute<Player> { player, context, _ ->
-                    val type = when (context.get(0).lowercase()) {
+                    val type = when (context.get(1).lowercase()) {
                         "cube" -> ThermInternal.ThermType.CUBE
                         "standalone" -> ThermInternal.ThermType.STANDALONE_SEAT
                         "player" -> ThermInternal.ThermType.PLAYER_SEAT
@@ -47,20 +52,21 @@ object Commands {
                         }
                     }
                     val data = if (type == ThermInternal.ThermType.PLAYER_SEAT) {
-                        ThermInternal(ThermInternal.ThermType.PLAYER_SEAT, null, null)
+                        ThermInternal(ThermInternal.ThermType.PLAYER_SEAT, null, null, null)
                     } else {
                         if (!FunctionCreateTherm.isLegalLocations()) {
                             player.sendMessage("&c[System] &7请选择点的坐标.".colored())
                             return@execute
                         }
-                        ThermInternal(type, selectPointsList[0], selectPointsList[1])
+                        ThermInternal(type, selectPointsList[0], selectPointsList[1], null)
                     }
-                    val name = context.get(1)
+                    val name = context.get(2)
                     if (Therm.getByName(name) != null) {
                         player.sendMessage("&c[System] &7该点位已存在.".colored())
                         return@execute
                     }
                     ThermAPI.saveAs(name, data)
+                    player.sendMessage("&c[System] &7已保存 $name 点位.".colored())
                 }
             }
         }
@@ -68,19 +74,32 @@ object Commands {
 
     @CommandBody
     val list = subCommand {
-        execute<Player> { player, _, _ ->
-            player.sendMessage("&c[System] &7当前存在的点位列表: ".colored())
+        execute<CommandSender> { sender, _, _ ->
+            sender.sendMessage("&c[System] &7当前存在的点位列表: ".colored())
             Therm.therms.forEach {
-                player.sendMessage("&c[System] &7$it".colored())
+                sender.sendMessage("&c[System] &7$it".colored())
             }
         }
     }
 
     @CommandBody
     val reload = subCommand {
-        execute<Player> { player, _, _ ->
+        execute<CommandSender> { sender, _, _ ->
             Therm.i()
-            player.sendMessage("&c[System] &7重载完成.".colored())
+            sender.sendMessage("&c[System] &7重载完成.".colored())
+        }
+    }
+
+    @CommandBody
+    val test = subCommand {
+        dynamic(commit = "type") {
+            dynamic(commit = "name") {
+                execute<Player> { player, context, _ ->
+                    player.sendMessage("context 0 = ${context.getOrNull(0)}")
+                    player.sendMessage("context 1 = ${context.getOrNull(1)}")
+                    player.sendMessage("context 2 = ${context.getOrNull(2)}")
+                }
+            }
         }
     }
 }

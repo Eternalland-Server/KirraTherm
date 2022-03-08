@@ -2,13 +2,16 @@ package net.sakuragame.eternal.kirratherm.function
 
 import com.taylorswiftcn.justwei.util.UnitConvert
 import net.sakuragame.eternal.gemseconomy.api.GemsEconomyAPI
+import net.sakuragame.eternal.gemseconomy.currency.EternalCurrency
 import net.sakuragame.eternal.justmessage.api.MessageAPI
 import net.sakuragame.eternal.kirratherm.KirraThermAPI
 import net.sakuragame.eternal.kirratherm.Profile
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
+import net.sakuragame.eternal.kirratherm.getRegion
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.entity.EntityDamageEvent
@@ -21,7 +24,10 @@ import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.submit
+import taboolib.common.reflect.Reflex.Companion.invokeMethod
 import taboolib.common5.Baffle
+import taboolib.platform.util.isAir
+import taboolib.platform.util.isNotAir
 import taboolib.platform.util.sendLang
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
@@ -64,7 +70,7 @@ object FunctionTherm {
                         }
                     }
                     finalGainMap.forEach gainForeach@{ (index, value) ->
-                        val currency = GemsEconomyAPI.getCurrency(index) ?: return@gainForeach
+                        val currency = EternalCurrency.values().find { it.identifier == index } ?: return@gainForeach
                         GemsEconomyAPI.deposit(player.uniqueId, value, currency, "泡点奖励.")
                     }
                     PlayerThermGainEvent(player, therm.name, finalGainMap).call()
@@ -73,7 +79,7 @@ object FunctionTherm {
         }
     }
 
-    @EventHandler
+    @SubscribeEvent
     fun onRideStandaloneSeat(e: PlayerInteractEvent) {
         if (e.hand != EquipmentSlot.HAND) {
             return
@@ -96,6 +102,30 @@ object FunctionTherm {
     }
 
     @SubscribeEvent
+    fun onTryToSpawnSeat(e: PlayerInteractEvent) {
+        if (e.hand != EquipmentSlot.HAND) {
+            return
+        }
+        val item = e.item ?: return
+        if (!item.isSeat()) return
+        val player = e.player
+        val profile = player.getProfile() ?: return
+        val seatId = item.getSeatId() ?: return
+        val therm = Therm.getByName(seatId) ?: return
+        val clickedBlock = e.clickedBlock ?: return
+        if (!isAllowedToRideSeat(therm, player)) {
+            return
+        }
+        profile.armorStandEntity = KirraThermAPI.generateSitEntity(clickedBlock.location
+            .add(0.0, 1.0, 0.0)
+            .setDirection(player.location.direction),
+            seatId,
+            player
+        )
+        Therm.join(player, therm)
+    }
+
+    @SubscribeEvent
     fun e(e: EntityDamageEvent) {
         if (e.isCancelled) return
         val player = e.entity as? Player ?: return
@@ -108,7 +138,7 @@ object FunctionTherm {
     @SubscribeEvent
     fun e(e: PlayerDropItemEvent) {
         if (e.isCancelled) return
-//        if (e.itemDrop.itemStack.getNbtIsSimilarTherm() == null) return
+        if (!e.itemDrop.itemStack.isSeat()) return
         val player = e.player
         val profile = player.getProfile() ?: return
         if (profile.armorStandEntity != null) {
@@ -144,6 +174,13 @@ object FunctionTherm {
         if (player.vehicle != null) {
             return false
         }
+        val allowedRegion = therm.data.allowedRegion
+        if (allowedRegion != null) {
+            if (player.getRegion() != allowedRegion) {
+                player.sendLang("message-player-region-limited")
+                return false
+            }
+        }
         return true
     }
 
@@ -156,9 +193,10 @@ object FunctionTherm {
     private fun toReplaced(str: String, player: Player, gainMap: MutableMap<String, Double>): String {
         var toReturn = str
         gainMap.forEach { (index, value) ->
-            val currencyBalance = GemsEconomyAPI.getBalance(player.uniqueId, GemsEconomyAPI.getCurrency(index)).roundToLong()
-            toReturn = toReturn.replace("<$index>", UnitConvert.getFormatLong(currencyBalance))
-            toReturn = toReturn.replace("<$index-added>", UnitConvert.getFormatLong(value.roundToLong()).toString())
+            val currency = EternalCurrency.values().find { it.identifier == index } ?: return@forEach
+            val currencyBalance = GemsEconomyAPI.getBalance(player.uniqueId, currency).roundToLong()
+            toReturn = toReturn.replace("<$index>", UnitConvert.formatCN(UnitConvert.Million, currencyBalance.toDouble()))
+            toReturn = toReturn.replace("<$index-added>", UnitConvert.formatCN(UnitConvert.Million, value))
         }
         return toReturn
     }

@@ -1,5 +1,6 @@
 package net.sakuragame.eternal.kirratherm.therm
 
+import ink.ptms.zaphkiel.ZaphkielAPI
 import net.sakuragame.eternal.kirratherm.KirraThermAPI
 import net.sakuragame.eternal.kirratherm.Profile
 import org.bukkit.Location
@@ -8,7 +9,9 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import taboolib.common.platform.function.submit
+import taboolib.platform.util.isAir
 
 fun getRandomDouble() = ((100..150).random() / 100).toDouble()
 
@@ -20,6 +23,22 @@ fun Player.getBelongPermission() = KirraThermAPI.multipleMap.keys.firstOrNull { 
 
 fun Location.isInArea(locA: Location, locB: Location): Boolean {
     return (x - locA.x) * (x - locB.x) <= 0.0 && (y - locA.y) * (y - locB.y) <= 0.0 && (z - locA.z) * (z - locB.z) <= 0.0
+}
+
+fun ItemStack.isSeat(): Boolean {
+    return getSeatId() != null
+}
+
+fun ItemStack.getSeatId(): String? {
+    if (isAir()) return null
+    val itemStream = ZaphkielAPI.read(this)
+    if (itemStream.isVanilla()) {
+        return null
+    }
+    if (itemStream.getZaphkielData().getDeep("fishing.id") == null) {
+        return null
+    }
+    return itemStream.getZaphkielData().getDeep("fishing.id").asString()
 }
 
 fun isAlreadySited(name: String) = Profile.profiles.values.firstOrNull { it.currentTherm == name } != null
@@ -72,7 +91,7 @@ fun runRegenTask(player: Player, therm: Therm) {
                 player.health = (therm.thermSeat.regenHeartsPerTicks + player.health).coerceAtMost(player.maxHealth)
                 return@submit
             }
-            player.healthScale = (player.healthScale + therm.thermSeat.regenScalePerTicks).coerceAtMost(player.maxHealth)
+            player.healthScale = (player.healthScale + therm.thermSeat.regenScalePerTicks).coerceAtMost(1.0)
         } else {
             cancel()
             return@submit

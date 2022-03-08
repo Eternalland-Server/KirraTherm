@@ -24,10 +24,6 @@ object KirraThermAPI {
         KirraTherm.conf.getLong("regen-interval")
     }
 
-    val disableWorlds by lazy {
-        KirraTherm.conf.getStringList("settings.generate-disable-worlds")
-    }
-
     val actionMessage by lazy {
         KirraTherm.conf.getStringListColored("settings.action-message")
     }
@@ -48,7 +44,7 @@ object KirraThermAPI {
 
     fun generateSitEntity(loc: Location, name: String, player: Player? = null): ArmorStand? {
         return (loc.world.spawnEntity(loc, EntityType.ARMOR_STAND) as ArmorStand).also {
-            if (!it.isValid) run {
+            if (!it.isValid) {
                 it.remove()
                 return null
             }

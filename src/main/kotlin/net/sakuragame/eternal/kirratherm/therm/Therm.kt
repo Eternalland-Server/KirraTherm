@@ -5,13 +5,15 @@ import net.sakuragame.eternal.kirratherm.KirraTherm
 import net.sakuragame.eternal.kirratherm.Profile
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.debug
+import net.sakuragame.eternal.kirratherm.event.PlayerThermJoinEvent
+import net.sakuragame.eternal.kirratherm.event.PlayerThermQuitEvent
 import net.sakuragame.eternal.kirratherm.parseToLoc
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
-import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.*
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isPlayer
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isStandAlone
 import net.sakuragame.eternal.kirratherm.therm.data.ThermSeat
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.Player
@@ -44,27 +46,29 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
         fun i() {
             clearTherms()
             clearTasks()
+            clearEntities()
             val file = KirraTherm.thermFile
             val sections = file.getConfigurationSection("data") ?: return
             sections.getKeys(false).forEach { section ->
-                val type = values().find { it.name == file.getString("data.$it.type") } ?: return@forEach
-                val data = ThermInternal(type, null, null)
+                val type = ThermInternal.ThermType.values().find { it.name == file.getString("data.$section.type") } ?: return@forEach
+                val allowedRegion = file.getString("data.$section.allowed-region")
+                val data = ThermInternal(type, null, null, allowedRegion)
                 val gainMap = mutableMapOf<String, Double>().also {
-                    val keys = file.getConfigurationSection("datas.$section.gain")?.getKeys(false) ?: return@also
+                    val keys = file.getConfigurationSection("data.$section.gain")?.getKeys(false) ?: return@also
                     keys.forEach { gainSection ->
                         it[gainSection] = file.getDouble("data.$section.gain.$gainSection")
                     }
                 }
                 when (data.type) {
-                    CUBE -> {
+                    ThermInternal.ThermType.CUBE -> {
                         data.locA = file.getString("data.$section.loc-a")?.parseToLoc() ?: return@forEach
                         data.locB = file.getString("data.$section.loc-b")?.parseToLoc() ?: return@forEach
                         val therm = Therm(section, data, gainMap, null)
                         debug("已加载温泉: ${therm.name}.")
                         debug("正在加载 ${therm.name} 的特效.")
                         val particleType = Particle.values().find { it.name == file.getString("data.$section.particle.type") } ?: return@forEach
-                        val particleCounts = file.getInt("datas.$section.particle.counts")
-                        val particleDistance = file.getDouble("datas.$section.particle.distance")
+                        val particleCounts = file.getInt("data.$section.particle.counts")
+                        val particleDistance = file.getDouble("data.$section.particle.distance")
                         val cubeLocs = getHollowCube(data.locA!!, data.locB!!, particleDistance)
                         tasks += submit(async = true, delay = 0L, period = 20L) {
                             cubeLocs.forEach { loc ->
@@ -75,7 +79,7 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                         }
                         debug("已开始播放 ${therm.name} 的特效.")
                     }
-                    STANDALONE_SEAT, PLAYER_SEAT -> {
+                    ThermInternal.ThermType.STANDALONE_SEAT, ThermInternal.ThermType.PLAYER_SEAT -> {
                         val delayToRegen = file.getLong("data.$section.delay-to-regen")
                         val regenHeartsPerTicks = file.getDouble("data.$section.regen-hearts-per-ticks")
                         val regenScalePerTicks = file.getDouble("data.$section.regen-scale-per-ticks")
@@ -83,10 +87,9 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                         val seatData =
                             if (type.isStandAlone()) {
                                 val loc = file.getString("data.$section.loc")?.parseToLoc() ?: return@forEach
-                                ThermSeat(loc, entityName, delayToRegen, regenHeartsPerTicks, regenScalePerTicks, null)
+                                ThermSeat(loc, entityName, delayToRegen, regenHeartsPerTicks, regenScalePerTicks)
                             } else {
-                                val itemName = file.getString("data.$section.item-name") ?: return@forEach
-                                ThermSeat(null, entityName, delayToRegen, regenHeartsPerTicks, regenScalePerTicks, itemName)
+                                ThermSeat(null, entityName, delayToRegen, regenHeartsPerTicks, regenScalePerTicks)
                             }
                         val therm = Therm(section, data, gainMap, seatData)
                         therms += therm
@@ -105,6 +108,15 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
             tasks.clear()
         }
 
+        private fun clearEntities() {
+            Bukkit.getWorlds().map { it.entities }.forEach {
+                it.forEach { entity ->
+                    if (entity.hasMetadata(STANDALONE_SEAT_KEY) || entity.hasMetadata(PLAYER_SEAT_KEY)) {
+                        entity.remove()
+                    }
+                }
+            }
+        }
 
         fun join(player: Player, therm: Therm) {
             val profile = player.getProfile() ?: return
@@ -120,10 +132,12 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                 player.sendLang("message-player-join-therm", profile.currentTherm)
                 runTotemParticleTask(player)
             }
+            PlayerThermJoinEvent(player, therm.name).call()
         }
 
         fun left(player: Player, isSeat: Boolean = false) {
             val profile = player.getProfile() ?: return
+            PlayerThermQuitEvent(player, profile.currentTherm).call()
             when (isSeat) {
                 true -> player.sendLang("message-player-left-seat", profile.currentTherm)
                 else -> player.sendLang("message-player-quit-therm", profile.currentTherm)

@@ -6,6 +6,11 @@ plugins {
 }
 
 taboolib {
+    description {
+        dependencies {
+            name("WorldGuard")
+        }
+    }
     install("common")
     install("common-5")
     install("module-chat")
@@ -30,9 +35,11 @@ repositories {
 }
 
 dependencies {
+    compileOnly("ink.ptms:Zaphkiel:1.7.6@jar")
     compileOnly("net.sakuragame.eternal:DragonCore:2.5.1-SNAPSHOT@jar")
     compileOnly("net.sakuragame.eternal:GemsEconomy:4.9.4-SNAPSHOT@jar")
     compileOnly("net.sakuragame.eternal:JustMessage:1.0.2-SNAPSHOT@jar")
+    compileOnly("com.taylorswiftcn:UIFactory:1.0.0-SNAPSHOT@jar")
     compileOnly("ink.ptms.core:v11200:11200-minimize@jar")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
@@ -45,25 +52,4 @@ tasks.withType<JavaCompile> {
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-publishing {
-    repositories {
-        maven {
-            url = uri("https://repo.tabooproject.org/repository/releases")
-            credentials {
-                username = project.findProperty("taboolibUsername").toString()
-                password = project.findProperty("taboolibPassword").toString()
-            }
-            authentication {
-                create<BasicAuthentication>("basic")
-            }
-        }
-    }
-    publications {
-        create<MavenPublication>("library") {
-            from(components["java"])
-            groupId = project.group.toString()
-        }
-    }
 }

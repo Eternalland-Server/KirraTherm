@@ -8,8 +8,7 @@ data class ThermSeat(
     val entityName: String,
     val delayToRegen: Long,
     val regenHeartsPerTicks: Double,
-    val regenScalePerTicks: Double,
-    val itemNbtIndex: String? = null,
+    val regenScalePerTicks: Double
 ) {
 
     init {

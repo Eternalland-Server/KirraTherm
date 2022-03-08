@@ -8,11 +8,9 @@ settings:
   action-message:
     - "&6&l泡点增益"
     - " "
-    - "&7金币: &f<金币> &a(+<金币-added>)"
-    - "&7点券: &f<点券> &a(+<点券-added>)"
-    - "&7神石: &f<神石> &a(+<神石-added>)"
-  generate-disable-worlds:
-    - "world_the_end"
+    - "&7金币: &f<money> &a(+<money-added>)"
+    - "&7点券: &f<coins> &a(+<coins-added>)"
+    - "&7神石: &f<points> &a(+<points-added>)"
   # 权限倍率设置.
   multiple-by-permission:
     # 默认倍率
