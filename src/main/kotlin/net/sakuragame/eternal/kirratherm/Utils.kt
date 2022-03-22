@@ -7,6 +7,7 @@ import org.bukkit.Location
 fun debug(message: String) = KirraTherm.plugin.server.consoleSender.sendMessage("[KirraTherm] $message")
 
 fun Location.parseToString(): String {
+    "test".isBlank()
     return "${world.name}@$x@$y@$z@$yaw@$pitch"
 }
 

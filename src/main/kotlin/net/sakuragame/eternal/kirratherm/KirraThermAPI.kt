@@ -1,5 +1,6 @@
 package net.sakuragame.eternal.kirratherm
 
+import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.data.MultipleData
 import org.bukkit.Location
@@ -59,5 +60,16 @@ object KirraThermAPI {
             }
             it.setMetadata(Therm.STANDALONE_SEAT_KEY, FixedMetadataValue(KirraTherm.plugin, ""))
         }
+    }
+
+    fun isPlayerOnSeat(player: Player): Boolean {
+        val profile = player.getProfile() ?: return false
+        return profile.armorStandEntity != null
+    }
+
+    fun getPlayerSeatId(player: Player): String? {
+        val profile = player.getProfile() ?: return null
+        if (profile.currentTherm.isEmpty()) return null
+        return profile.currentTherm
     }
 }

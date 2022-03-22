@@ -6,8 +6,11 @@ import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm.selectPoin
 import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.ThermAPI
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
+import net.sakuragame.eternal.kirratherm.therm.isSeat
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
@@ -52,13 +55,13 @@ object Commands {
                         }
                     }
                     val data = if (type == ThermInternal.ThermType.PLAYER_SEAT) {
-                        ThermInternal(ThermInternal.ThermType.PLAYER_SEAT, null, null, null)
+                        ThermInternal(ThermInternal.ThermType.PLAYER_SEAT, null, null)
                     } else {
                         if (!FunctionCreateTherm.isLegalLocations()) {
                             player.sendMessage("&c[System] &7请选择点的坐标.".colored())
                             return@execute
                         }
-                        ThermInternal(type, selectPointsList[0], selectPointsList[1], null)
+                        ThermInternal(type, selectPointsList[0], selectPointsList[1])
                     }
                     val name = context.get(2)
                     if (Therm.getByName(name) != null) {
@@ -76,7 +79,7 @@ object Commands {
     val list = subCommand {
         execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&c[System] &7当前存在的点位列表: ".colored())
-            Therm.therms.forEach {
+            Therm.getAll().forEach {
                 sender.sendMessage("&c[System] &7$it".colored())
             }
         }
@@ -92,12 +95,11 @@ object Commands {
 
     @CommandBody
     val test = subCommand {
-        dynamic(commit = "type") {
-            dynamic(commit = "name") {
-                execute<Player> { player, context, _ ->
-                    player.sendMessage("context 0 = ${context.getOrNull(0)}")
-                    player.sendMessage("context 1 = ${context.getOrNull(1)}")
-                    player.sendMessage("context 2 = ${context.getOrNull(2)}")
+        execute<Player> { player, _, _ ->
+            player.world.entities.filterIsInstance(ArmorStand::class.java).forEach {
+                if (it.customName != null) {
+                    player.sendMessage(it.customName)
+                    it.remove()
                 }
             }
         }

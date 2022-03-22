@@ -16,6 +16,7 @@ import net.sakuragame.eternal.kirratherm.therm.data.ThermSeat
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Particle
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
@@ -32,9 +33,11 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
         const val STANDALONE_SEAT_KEY = "KIRRATHERM_STANDALONE_SEAT"
         const val CUBE_SEAT_KEY = "KIRRATHERM_CUBE_SEAT"
 
-        val therms = mutableListOf<Therm>()
+        private val therms = mutableListOf<Therm>()
 
         private val tasks = mutableListOf<PlatformExecutor.PlatformTask>()
+
+        fun getAll() = therms
 
         fun getByName(name: String) = therms.find { it.name == name }
 
@@ -51,8 +54,7 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
             val sections = file.getConfigurationSection("data") ?: return
             sections.getKeys(false).forEach { section ->
                 val type = ThermInternal.ThermType.values().find { it.name == file.getString("data.$section.type") } ?: return@forEach
-                val allowedRegion = file.getString("data.$section.allowed-region")
-                val data = ThermInternal(type, null, null, allowedRegion)
+                val data = ThermInternal(type, null, null)
                 val gainMap = mutableMapOf<String, Double>().also {
                     val keys = file.getConfigurationSection("data.$section.gain")?.getKeys(false) ?: return@also
                     keys.forEach { gainSection ->
@@ -64,8 +66,8 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                         data.locA = file.getString("data.$section.loc-a")?.parseToLoc() ?: return@forEach
                         data.locB = file.getString("data.$section.loc-b")?.parseToLoc() ?: return@forEach
                         val therm = Therm(section, data, gainMap, null)
+                        therms += therm
                         debug("已加载温泉: ${therm.name}.")
-                        debug("正在加载 ${therm.name} 的特效.")
                         val particleType = Particle.values().find { it.name == file.getString("data.$section.particle.type") } ?: return@forEach
                         val particleCounts = file.getInt("data.$section.particle.counts")
                         val particleDistance = file.getDouble("data.$section.particle.distance")
@@ -93,7 +95,7 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                             }
                         val therm = Therm(section, data, gainMap, seatData)
                         therms += therm
-                        debug("已加载温泉: ${therm.name}.")
+                        debug("已加载座椅: ${therm.name}.")
                     }
                 }
             }
@@ -109,11 +111,12 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
         }
 
         private fun clearEntities() {
-            Bukkit.getWorlds().map { it.entities }.forEach {
-                it.forEach { entity ->
-                    if (entity.hasMetadata(STANDALONE_SEAT_KEY) || entity.hasMetadata(PLAYER_SEAT_KEY)) {
-                        entity.remove()
-                    }
+            Bukkit.getWorlds().forEach { world ->
+                world.entities
+                    .filter { it.type == EntityType.ARMOR_STAND }
+                    .filter { it.hasMetadata(STANDALONE_SEAT_KEY) || it.hasMetadata(PLAYER_SEAT_KEY) }
+                    .forEach {
+                    it.remove()
                 }
             }
         }

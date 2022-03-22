@@ -25,4 +25,10 @@ object KirraTherm : Plugin() {
         }
         Configuration.loadFromFile(file, Type.YAML)
     }
+
+    override fun onEnable() {
+        Profile.profiles.values.forEach {
+            it.armorStandEntity?.remove()
+        }
+    }
 }

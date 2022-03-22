@@ -56,7 +56,9 @@ class Profile(val player: Player) {
     /**
      * 保存相关信息.
      */
-    fun save() {}
+    fun save() {
+        armorStandEntity?.remove()
+    }
 
     /**
      * 销毁信息.

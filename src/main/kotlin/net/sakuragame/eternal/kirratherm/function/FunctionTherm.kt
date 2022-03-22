@@ -13,7 +13,6 @@ import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
@@ -24,10 +23,7 @@ import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.submit
-import taboolib.common.reflect.Reflex.Companion.invokeMethod
 import taboolib.common5.Baffle
-import taboolib.platform.util.isAir
-import taboolib.platform.util.isNotAir
 import taboolib.platform.util.sendLang
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
@@ -43,7 +39,7 @@ object FunctionTherm {
         submit(async = true, period = 2L) {
             Profile.profiles.values.forEach { profile ->
                 val player = profile.player
-                Therm.therms
+                Therm.getAll()
                     .filter { it.data.type.isCube() }
                     .filter { player.isInArea(it.data.locA!!, it.data.locB!!) && profile.currentTherm != it.name }
                     .forEach {
@@ -174,12 +170,9 @@ object FunctionTherm {
         if (player.vehicle != null) {
             return false
         }
-        val allowedRegion = therm.data.allowedRegion
-        if (allowedRegion != null) {
-            if (player.getRegion() != allowedRegion) {
-                player.sendLang("message-player-region-limited")
-                return false
-            }
+        if (baffle.hasNext(player.name)) {
+            player.sendLang("message-player-baffle")
+            return false
         }
         return true
     }
@@ -195,8 +188,8 @@ object FunctionTherm {
         gainMap.forEach { (index, value) ->
             val currency = EternalCurrency.values().find { it.identifier == index } ?: return@forEach
             val currencyBalance = GemsEconomyAPI.getBalance(player.uniqueId, currency).roundToLong()
-            toReturn = toReturn.replace("<$index>", UnitConvert.formatCN(UnitConvert.Million, currencyBalance.toDouble()))
-            toReturn = toReturn.replace("<$index-added>", UnitConvert.formatCN(UnitConvert.Million, value))
+            toReturn = toReturn.replace("<$index>", UnitConvert.formatCN(UnitConvert.TenThousand, currencyBalance.toDouble()))
+            toReturn = toReturn.replace("<$index-added>", UnitConvert.formatCN(UnitConvert.TenThousand, value))
         }
         return toReturn
     }

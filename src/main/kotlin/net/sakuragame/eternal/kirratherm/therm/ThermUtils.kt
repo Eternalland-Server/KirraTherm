@@ -17,13 +17,15 @@ fun getRandomDouble() = ((100..150).random() / 100).toDouble()
 
 fun getRandomInt() = (5..10).random()
 
-fun Player.isInArea(locA: Location, locB: Location) = location.isInArea(locA, locB)
+fun ArmorStand.isSeat() = hasMetadata(Therm.STANDALONE_SEAT_KEY) || hasMetadata(Therm.PLAYER_SEAT_KEY)
 
-fun Player.getBelongPermission() = KirraThermAPI.multipleMap.keys.firstOrNull { it != "default" && hasPermission(it) }
+fun Player.isInArea(locA: Location, locB: Location) = location.isInArea(locA, locB)
 
 fun Location.isInArea(locA: Location, locB: Location): Boolean {
     return (x - locA.x) * (x - locB.x) <= 0.0 && (y - locA.y) * (y - locB.y) <= 0.0 && (z - locA.z) * (z - locB.z) <= 0.0
 }
+
+fun Player.getBelongPermission() = KirraThermAPI.multipleMap.keys.firstOrNull { it != "default" && hasPermission(it) }
 
 fun ItemStack.isSeat(): Boolean {
     return getSeatId() != null
