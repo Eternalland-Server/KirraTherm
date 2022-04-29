@@ -8,10 +8,8 @@ import net.sakuragame.eternal.kirratherm.KirraThermAPI
 import net.sakuragame.eternal.kirratherm.Profile
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
-import net.sakuragame.eternal.kirratherm.getRegion
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
-import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent

@@ -6,8 +6,8 @@ plugins {
 
 taboolib {
     description {
-        dependencies {
-            name("WorldGuard")
+        contributors {
+            name("闲蛋")
         }
     }
     install("common")
@@ -19,7 +19,7 @@ taboolib {
     install("platform-bukkit")
     install("expansion-command-helper")
     classifier = null
-    version = "6.0.7-38"
+    version = "6.0.7-50"
 }
 
 repositories {

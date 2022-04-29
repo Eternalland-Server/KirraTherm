@@ -22,6 +22,7 @@ import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
+import taboolib.platform.util.asLangText
 import taboolib.platform.util.sendLang
 
 @Suppress("SpellCheckingInspection")
@@ -43,7 +44,7 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
 
         fun getByLoc(loc: Location) = therms.find { it.data.type.isCube() && loc.isInArea(it.data.locA!!, it.data.locB!!) }
 
-        fun getNearestSeatByLoc(loc: Location) = therms.find { it.data.type.isPlayer() && loc.distanceSquared(it.thermSeat?.loc) <= 1.0 }
+        fun getNearestSeatByLoc(loc: Location) = therms.find { it.data.type.isPlayer() && loc.world == it.thermSeat?.loc?.world && loc.distanceSquared(it.thermSeat?.loc) <= 1.0 }
 
         @Awake(LifeCycle.ENABLE)
         fun i() {
@@ -74,8 +75,11 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                         val cubeLocs = getHollowCube(data.locA!!, data.locB!!, particleDistance)
                         tasks += submit(async = true, delay = 0L, period = 20L) {
                             cubeLocs.forEach { loc ->
-                                Profile.profiles.values.filter { it.player.location.distanceSquared(loc) < 20 * 20 }.forEach {
-                                    it.player.spawnParticle(particleType, loc, particleCounts)
+                                Profile.profiles.values
+                                    .filter { it.player.world == loc.world }
+                                    .filter { it.player.location.distanceSquared(loc) < 20 * 20 }
+                                    .forEach {
+                                    it.player.spawnParticle(particleType, loc, particleCounts, 0.0, 0.0, 0.0, 0.02)
                                 }
                             }
                         }
@@ -126,13 +130,13 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
             profile.currentTherm = therm.name
             if (therm.data.type.isPlayer()) {
                 // 座椅泡点.
-                player.sendLang("message-player-sits-on-seat", profile.currentTherm)
+                MessageAPI.sendActionTip(player, player.asLangText("message-player-sits-on-seat", profile.currentTherm))
                 submit(delay = therm.thermSeat!!.delayToRegen) {
                     runRegenTask(player, therm)
                 }
             } else {
                 // 区域泡点.
-                player.sendLang("message-player-join-therm", profile.currentTherm)
+                MessageAPI.sendActionTip(player, player.asLangText("message-player-join-therm", profile.currentTherm))
                 runTotemParticleTask(player)
             }
             PlayerThermJoinEvent(player, therm.name).call()
@@ -141,10 +145,11 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
         fun left(player: Player, isSeat: Boolean = false) {
             val profile = player.getProfile() ?: return
             PlayerThermQuitEvent(player, profile.currentTherm).call()
-            when (isSeat) {
-                true -> player.sendLang("message-player-left-seat", profile.currentTherm)
-                else -> player.sendLang("message-player-quit-therm", profile.currentTherm)
+            val message = when (isSeat) {
+                true -> player.asLangText("message-player-left-seat", profile.currentTherm)
+                else -> player.asLangText("message-player-quit-therm", profile.currentTherm)
             }
+            MessageAPI.sendActionTip(player, message)
             profile.currentTherm = ""
             MessageAPI.removeCrossHairTip(player)
         }

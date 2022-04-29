@@ -22,6 +22,9 @@ fun ArmorStand.isSeat() = hasMetadata(Therm.STANDALONE_SEAT_KEY) || hasMetadata(
 fun Player.isInArea(locA: Location, locB: Location) = location.isInArea(locA, locB)
 
 fun Location.isInArea(locA: Location, locB: Location): Boolean {
+    if (locA.world != locB.world) {
+        return false
+    }
     return (x - locA.x) * (x - locB.x) <= 0.0 && (y - locA.y) * (y - locB.y) <= 0.0 && (z - locA.z) * (z - locB.z) <= 0.0
 }
 
