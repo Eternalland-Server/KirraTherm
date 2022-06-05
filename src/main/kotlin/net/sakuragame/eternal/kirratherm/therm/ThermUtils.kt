@@ -3,6 +3,8 @@ package net.sakuragame.eternal.kirratherm.therm
 import ink.ptms.zaphkiel.ZaphkielAPI
 import net.sakuragame.eternal.kirratherm.KirraThermAPI
 import net.sakuragame.eternal.kirratherm.Profile
+import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
+import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
@@ -46,7 +48,16 @@ fun ItemStack.getSeatId(): String? {
     return itemStream.getZaphkielData().getDeep("fishing.id").asString()
 }
 
-fun isAlreadySited(name: String) = Profile.profiles.values.firstOrNull { it.currentTherm == name } != null
+fun isAlreadySited(player: Player, therm: Therm): Boolean {
+    if (therm.data.type != ThermInternal.ThermType.PLAYER_SEAT) {
+        return Profile.profiles.values.firstOrNull { it.currentTherm == therm.name } != null
+    }
+    val profile = player.getProfile() ?: return false
+    if (profile.currentTherm.isNotEmpty()) {
+        return true
+    }
+    return false
+}
 
 fun getSitedPlayer(name: String) = Profile.profiles.values.firstOrNull { it.currentTherm == name }?.player
 
@@ -116,7 +127,8 @@ fun runTotemParticleTask(player: Player) {
 }
 
 private fun spawnParticle(player: Player) {
-    player.world.spawnParticle(Particle.HEART,
+    player.world.spawnParticle(
+        Particle.HEART,
         player.location.x,
         player.location.y,
         player.location.z,

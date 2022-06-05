@@ -10,13 +10,16 @@ import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.vehicle.VehicleEnterEvent
 import org.bukkit.inventory.EquipmentSlot
+import org.spigotmc.event.entity.EntityMountEvent
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.event.SubscribeEvent
@@ -54,11 +57,11 @@ object FunctionTherm {
                 .forEach { profile ->
                     val player = profile.player
                     val therm = Therm.getByName(profile.currentTherm) ?: return@forEach
-                    val belongPermission = player.getBelongPermission() ?: "default"
+                    val permission = player.getBelongPermission() ?: "default"
                     val finalGainMap = mutableMapOf<String, Double>().also {
                         it += therm.gainMap
-                        it.forEach { (name, _) ->
-                            KirraThermAPI.multipleMap[belongPermission]!!.forEach { data ->
+                        it.keys.forEach { name ->
+                            KirraThermAPI.multipleMap[permission]!!.forEach { data ->
                                 if (data.name == name) it[data.name] = it[data.name]!!.times(data.value)
                             }
                         }
@@ -110,9 +113,10 @@ object FunctionTherm {
         if (!isAllowedToRideSeat(therm, player)) {
             return
         }
-        profile.armorStandEntity = KirraThermAPI.generateSitEntity(clickedBlock.location
-            .add(0.0, 1.0, 0.0)
-            .setDirection(player.location.direction),
+        profile.armorStandEntity = KirraThermAPI.generateSitEntity(
+            clickedBlock.location
+                .add(0.0, 1.0, 0.0)
+                .setDirection(player.location.direction),
             seatId,
             player
         )
@@ -157,8 +161,17 @@ object FunctionTherm {
         }
     }
 
+    @SubscribeEvent
+    fun e(e: EntityMountEvent) {
+        val player = e.entity as? Player ?: return
+        val profile = player.getProfile() ?: return
+        if (profile.armorStandEntity != null) {
+            return removePlayerSeat(player)
+        }
+    }
+
     private fun isAllowedToRideSeat(therm: Therm, player: Player): Boolean {
-        if (isAlreadySited(therm.name)) {
+        if (isAlreadySited(player, therm)) {
             if (getSitedPlayer(therm.name)?.uniqueId == player.uniqueId) {
                 return false
             }
@@ -168,10 +181,11 @@ object FunctionTherm {
         if (player.vehicle != null) {
             return false
         }
-        if (baffle.hasNext(player.name)) {
-            player.sendLang("message-player-baffle")
+        if (!baffle.hasNext(player.name)) {
             return false
         }
+        baffle.next(player.name)
+        player.sendLang("message-player-baffle")
         return true
     }
 

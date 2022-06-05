@@ -29,6 +29,10 @@ object KirraThermAPI {
         KirraTherm.conf.getStringListColored("settings.action-message")
     }
 
+    val actionMessageEmpty by lazy {
+        KirraTherm.conf.getStringListColored("settings.action-message-empty")
+    }
+
     val multipleMap by lazy {
         // (<权限名>, 列表(<货币名, 倍数>))
         mutableMapOf<String, MutableList<MultipleData>>().also {

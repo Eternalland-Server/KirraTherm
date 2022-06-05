@@ -1,13 +1,11 @@
 package net.sakuragame.eternal.kirratherm.therm
 
 import net.sakuragame.eternal.justmessage.api.MessageAPI
-import net.sakuragame.eternal.kirratherm.KirraTherm
-import net.sakuragame.eternal.kirratherm.Profile
+import net.sakuragame.eternal.kirratherm.*
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
-import net.sakuragame.eternal.kirratherm.debug
 import net.sakuragame.eternal.kirratherm.event.PlayerThermJoinEvent
 import net.sakuragame.eternal.kirratherm.event.PlayerThermQuitEvent
-import net.sakuragame.eternal.kirratherm.parseToLoc
+import net.sakuragame.eternal.kirratherm.function.FunctionTherm
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isPlayer
@@ -22,8 +20,8 @@ import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
+import taboolib.module.chat.colored
 import taboolib.platform.util.asLangText
-import taboolib.platform.util.sendLang
 
 @Suppress("SpellCheckingInspection")
 data class Therm(val name: String, val data: ThermInternal, val gainMap: MutableMap<String, Double>, val thermSeat: ThermSeat? = null) {
@@ -79,8 +77,8 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                                     .filter { it.player.world == loc.world }
                                     .filter { it.player.location.distanceSquared(loc) < 20 * 20 }
                                     .forEach {
-                                    it.player.spawnParticle(particleType, loc, particleCounts, 0.0, 0.0, 0.0, 0.02)
-                                }
+                                        it.player.spawnParticle(particleType, loc, particleCounts, 0.0, 0.0, 0.0, 0.02)
+                                    }
                             }
                         }
                         debug("已开始播放 ${therm.name} 的特效.")
@@ -120,8 +118,8 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
                     .filter { it.type == EntityType.ARMOR_STAND }
                     .filter { it.hasMetadata(STANDALONE_SEAT_KEY) || it.hasMetadata(PLAYER_SEAT_KEY) }
                     .forEach {
-                    it.remove()
-                }
+                        it.remove()
+                    }
             }
         }
 
@@ -130,13 +128,16 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
             profile.currentTherm = therm.name
             if (therm.data.type.isPlayer()) {
                 // 座椅泡点.
-                MessageAPI.sendActionTip(player, player.asLangText("message-player-sits-on-seat", profile.currentTherm))
+                player.sendTitle("", player.asLangText("message-player-sits-on-seat", profile.currentTherm))
                 submit(delay = therm.thermSeat!!.delayToRegen) {
                     runRegenTask(player, therm)
                 }
             } else {
                 // 区域泡点.
-                MessageAPI.sendActionTip(player, player.asLangText("message-player-join-therm", profile.currentTherm))
+                player.sendTitle("", player.asLangText("message-player-join-therm", 0, 25, 0))
+                KirraThermAPI.actionMessageEmpty.forEachIndexed { index, str ->
+                    MessageAPI.setCrossHairTip(player, index + 1, str.colored())
+                }
                 runTotemParticleTask(player)
             }
             PlayerThermJoinEvent(player, therm.name).call()
@@ -147,9 +148,9 @@ data class Therm(val name: String, val data: ThermInternal, val gainMap: Mutable
             PlayerThermQuitEvent(player, profile.currentTherm).call()
             val message = when (isSeat) {
                 true -> player.asLangText("message-player-left-seat", profile.currentTherm)
-                else -> player.asLangText("message-player-quit-therm", profile.currentTherm)
+                else -> player.asLangText("message-player-quit-therm")
             }
-            MessageAPI.sendActionTip(player, message)
+            player.sendTitle("", message, 0, 25, 0)
             profile.currentTherm = ""
             MessageAPI.removeCrossHairTip(player)
         }

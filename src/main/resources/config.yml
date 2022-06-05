@@ -11,6 +11,12 @@ settings:
     - "&7金币: &f<money> &a(+<money-added>)"
     - "&7点券: &f<coins> &a(+<coins-added>)"
     - "&7神石: &f<points> &a(+<points-added>)"
+  action-message-empty:
+    - "&6&l泡点增益"
+    - ""
+    - "&7&o目前还未获得收益, 再等等吧."
+    - ""
+    - ""
   # 权限倍率设置.
   multiple-by-permission:
     # 默认倍率

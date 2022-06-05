@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit
 
 object FunctionCreateTherm {
 
-    val selectPointsList = ArrayList<Location>().apply { for (i in 1..2) add(emptyLocation()) }
+    val selectPoints = ArrayList<Location>().apply { for (i in 1..2) add(emptyLocation()) }
 
-    fun isLegalLocations(): Boolean = !selectPointsList.contains(emptyLocation())
+    fun isLegalLocations(): Boolean = !selectPoints.contains(emptyLocation())
 
     private fun emptyLocation(): Location = Bukkit.getWorlds()[0]!!.spawnLocation
 
@@ -30,11 +30,11 @@ object FunctionCreateTherm {
             if (!baffle.hasNext(player.name)) return
             baffle.next(player.name)
             if (e.action == Action.LEFT_CLICK_BLOCK || e.action == Action.LEFT_CLICK_AIR) {
-                selectPointsList[0] = e.clickedBlock!!.location
+                selectPoints[0] = e.clickedBlock!!.location
                 player.sendMessage("&c[System] &7A 点已选中.".colored())
                 return
             }
-            selectPointsList[1] = e.clickedBlock!!.location
+            selectPoints[1] = e.clickedBlock!!.location
             player.sendMessage("&c[System] &7B 点已选中.".colored())
         }
     }

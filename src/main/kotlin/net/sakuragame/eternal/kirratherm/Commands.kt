@@ -2,15 +2,12 @@ package net.sakuragame.eternal.kirratherm
 
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm
-import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm.selectPointsList
+import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm.selectPoints
 import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.ThermAPI
 import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
-import net.sakuragame.eternal.kirratherm.therm.isSeat
-import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.ArmorStand
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import taboolib.common.platform.command.CommandBody
 import taboolib.common.platform.command.CommandHeader
@@ -61,7 +58,7 @@ object Commands {
                             player.sendMessage("&c[System] &7请选择点的坐标.".colored())
                             return@execute
                         }
-                        ThermInternal(type, selectPointsList[0], selectPointsList[1])
+                        ThermInternal(type, selectPoints[0], selectPoints[1])
                     }
                     val name = context.get(2)
                     if (Therm.getByName(name) != null) {
