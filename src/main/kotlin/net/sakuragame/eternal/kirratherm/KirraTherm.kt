@@ -1,7 +1,5 @@
 package net.sakuragame.eternal.kirratherm
 
-import org.bukkit.Bukkit
-import org.bukkit.entity.ArmorStand
 import taboolib.common.platform.Plugin
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -28,19 +26,7 @@ object KirraTherm : Plugin() {
         Configuration.loadFromFile(file, Type.YAML)
     }
 
-    override fun onEnable() {
-        Profile.profiles.values.forEach {
-            it.armorStandEntity?.remove()
-        }
-    }
-
     override fun onActive() {
-        Bukkit.getWorlds().forEach { 
-            it.entities.filterIsInstance(ArmorStand::class.java).forEach {armorStand ->
-                if (armorStand.customName != null) {
-                    armorStand.remove()
-                }
-            }
-        }
+        KirraThermAPI.removeAllArmorStands()
     }
 }

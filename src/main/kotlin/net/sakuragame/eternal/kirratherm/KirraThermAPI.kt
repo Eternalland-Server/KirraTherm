@@ -3,6 +3,7 @@ package net.sakuragame.eternal.kirratherm
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.data.MultipleData
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
@@ -37,11 +38,21 @@ object KirraThermAPI {
         // (<权限名>, 列表(<货币名, 倍数>))
         mutableMapOf<String, MutableList<MultipleData>>().also {
             val permissionSections = KirraTherm.conf.getConfigurationSection("settings.multiple-by-permission")?.getKeys(false) ?: return@also
-            permissionSections.forEach { section1 ->
-                val coinNameSections = KirraTherm.conf.getConfigurationSection("settings.multiple-by-permission.$section1")?.getKeys(false) ?: return@forEach
-                coinNameSections.forEach { section2 ->
-                    val multipleData = MultipleData(section2, KirraTherm.conf.getDouble("settings.multiple-by-permission.$section1.$section2"))
-                    it[section1]?.add(multipleData) ?: kotlin.run { it[section1] = mutableListOf(multipleData) }
+            permissionSections.forEach { sectionA ->
+                val coinNameSections = KirraTherm.conf.getConfigurationSection("settings.multiple-by-permission.$sectionA")?.getKeys(false) ?: return@forEach
+                coinNameSections.forEach { sectionB ->
+                    val multipleData = MultipleData(sectionB, KirraTherm.conf.getDouble("settings.multiple-by-permission.$sectionA.$sectionB"))
+                    it[sectionA]?.add(multipleData) ?: kotlin.run { it[sectionA] = mutableListOf(multipleData) }
+                }
+            }
+        }
+    }
+
+    fun removeAllArmorStands() {
+        Bukkit.getWorlds().forEach {
+            it.entities.filterIsInstance(ArmorStand::class.java).forEach { armorStand ->
+                if (armorStand.customName != null) {
+                    armorStand.remove()
                 }
             }
         }
