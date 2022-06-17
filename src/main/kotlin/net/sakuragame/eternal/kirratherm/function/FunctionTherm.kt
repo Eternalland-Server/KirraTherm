@@ -10,6 +10,7 @@ import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.impl.CubeTherm
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent
@@ -39,7 +40,7 @@ object FunctionTherm {
             Profile.profiles.values.forEach { profile ->
                 val player = profile.player
                 ThermManager.therms
-                    .map { it as? CubeTherm ?: return@forEach }
+                    .mapNotNull { it as? CubeTherm }
                     .forEach {
                         if (player.isInArea(it.locationA, it.locationB) && profile.currentArea != it.id) {
                             ThermManager.join(player, it)
@@ -54,6 +55,7 @@ object FunctionTherm {
         }
         submit(async = true, period = KirraThermAPI.thermInterval) {
             Profile.profiles.values
+                .filter { it.currentSeat.isNotEmpty() || it.currentArea.isNotEmpty() }
                 .forEach { profile ->
                     val player = profile.player
                     val gainMap = profile.getGainMap()

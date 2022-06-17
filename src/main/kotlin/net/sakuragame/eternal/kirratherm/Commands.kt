@@ -82,7 +82,7 @@ object Commands {
         execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&c[System] &7当前存在的点位列表: ".colored())
             ThermManager.therms.forEach {
-                sender.sendMessage("&c[System] &7$it".colored())
+                sender.sendMessage("&c[System] &7${it.id}".colored())
             }
         }
     }

@@ -1,6 +1,7 @@
 package net.sakuragame.eternal.kirratherm
 
 import net.sakuragame.eternal.kirratherm.therm.ThermManager
+import org.bukkit.Bukkit
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerJoinEvent
@@ -68,9 +69,15 @@ class Profile(val player: Player) {
     fun remove() = profiles.remove(player.name)
 
     fun getGainMap(): MutableMap<String, Double> {
-        return mutableMapOf<String, Double>().apply {
-            this += ThermManager.getByName(currentArea)?.gainMap ?: mutableMapOf()
-            this += ThermManager.getByName(currentSeat)?.gainMap ?: mutableMapOf()
+        val mapA = mutableMapOf<String, Double>().apply {
+            putAll(ThermManager.getByName(currentArea)?.gainMap ?: mutableMapOf())
         }
+        val mapB = mutableMapOf<String, Double>().apply {
+            putAll(ThermManager.getByName(currentSeat)?.gainMap ?: mutableMapOf())
+        }
+        mapA.forEach { (index, value) ->
+            mapB.merge(index, value, Double::plus)
+        }
+        return mapB
     }
 }
