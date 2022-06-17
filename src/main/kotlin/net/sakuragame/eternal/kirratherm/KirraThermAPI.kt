@@ -1,7 +1,7 @@
 package net.sakuragame.eternal.kirratherm
 
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
-import net.sakuragame.eternal.kirratherm.therm.Therm
+import net.sakuragame.eternal.kirratherm.therm.ThermManager
 import net.sakuragame.eternal.kirratherm.therm.data.MultipleData
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -70,10 +70,10 @@ object KirraThermAPI {
             it.isCustomNameVisible = false
             if (player != null) {
                 it.addPassenger(player)
-                it.setMetadata(Therm.PLAYER_SEAT_KEY, FixedMetadataValue(KirraTherm.plugin, ""))
+                it.setMetadata(ThermManager.PLAYER_SEAT_KEY, FixedMetadataValue(KirraTherm.plugin, ""))
                 return@also
             }
-            it.setMetadata(Therm.STANDALONE_SEAT_KEY, FixedMetadataValue(KirraTherm.plugin, ""))
+            it.setMetadata(ThermManager.STANDALONE_SEAT_KEY, FixedMetadataValue(KirraTherm.plugin, ""))
         }
     }
 
@@ -84,7 +84,7 @@ object KirraThermAPI {
 
     fun getPlayerSeatId(player: Player): String? {
         val profile = player.getProfile() ?: return null
-        if (profile.currentTherm.isEmpty()) return null
-        return profile.currentTherm
+        if (profile.currentSeat.isEmpty()) return null
+        return profile.currentSeat
     }
 }

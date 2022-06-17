@@ -3,9 +3,9 @@ package net.sakuragame.eternal.kirratherm
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm
 import net.sakuragame.eternal.kirratherm.function.FunctionCreateTherm.selectPoints
-import net.sakuragame.eternal.kirratherm.therm.Therm
 import net.sakuragame.eternal.kirratherm.therm.ThermAPI
-import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
+import net.sakuragame.eternal.kirratherm.therm.ThermManager
+import net.sakuragame.eternal.kirratherm.therm.data.ThermType.*
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
@@ -43,29 +43,34 @@ object Commands {
             dynamic(commit = "name") {
                 execute<Player> { player, context, _ ->
                     val type = when (context.get(1).lowercase()) {
-                        "cube" -> ThermInternal.ThermType.CUBE
-                        "standalone" -> ThermInternal.ThermType.STANDALONE_SEAT
-                        "player" -> ThermInternal.ThermType.PLAYER_SEAT
+                        "cube" -> CUBE
+                        "standalone" -> STANDALONE_SEAT
+                        "player" -> PLAYER_SEAT
                         else -> {
                             player.sendMessage("&c[System] &7错误的类型.".colored())
                             return@execute
                         }
                     }
-                    val data = if (type == ThermInternal.ThermType.PLAYER_SEAT) {
-                        ThermInternal(ThermInternal.ThermType.PLAYER_SEAT, null, null)
-                    } else {
-                        if (!FunctionCreateTherm.isLegalLocations()) {
-                            player.sendMessage("&c[System] &7请选择点的坐标.".colored())
-                            return@execute
+                    when (type) {
+                        CUBE -> {
+                            if (!FunctionCreateTherm.isLegalLocations()) {
+                                player.sendMessage("&c[System] &7请选择点的坐标.".colored())
+                                return@execute
+                            }
                         }
-                        ThermInternal(type, selectPoints[0], selectPoints[1])
+                        STANDALONE_SEAT -> {
+                            if (selectPoints[0] == FunctionCreateTherm.emptyLocation) {
+                                player.sendMessage("&c[System] &7点坐标错误.".colored())
+                            }
+                        }
+                        else -> {}
                     }
                     val name = context.get(2)
-                    if (Therm.getByName(name) != null) {
+                    if (ThermManager.getByName(name) != null) {
                         player.sendMessage("&c[System] &7该点位已存在.".colored())
                         return@execute
                     }
-                    ThermAPI.saveAs(name, data)
+                    ThermAPI.saveAs(name, type, selectPoints[0], selectPoints[1])
                     player.sendMessage("&c[System] &7已保存 $name 点位.".colored())
                 }
             }
@@ -76,7 +81,7 @@ object Commands {
     val list = subCommand {
         execute<CommandSender> { sender, _, _ ->
             sender.sendMessage("&c[System] &7当前存在的点位列表: ".colored())
-            Therm.getAll().forEach {
+            ThermManager.therms.forEach {
                 sender.sendMessage("&c[System] &7$it".colored())
             }
         }
@@ -85,7 +90,7 @@ object Commands {
     @CommandBody
     val reload = subCommand {
         execute<CommandSender> { sender, _, _ ->
-            Therm.i()
+            ThermManager.i()
             sender.sendMessage("&c[System] &7重载完成.".colored())
         }
     }

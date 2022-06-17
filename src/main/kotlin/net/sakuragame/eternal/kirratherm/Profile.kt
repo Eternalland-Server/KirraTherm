@@ -1,5 +1,6 @@
 package net.sakuragame.eternal.kirratherm
 
+import net.sakuragame.eternal.kirratherm.therm.ThermManager
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerJoinEvent
@@ -12,7 +13,8 @@ class Profile(val player: Player) {
 
     var createMode = false
 
-    var currentTherm = ""
+    var currentArea = ""
+    var currentSeat = ""
 
     var armorStandEntity: ArmorStand? = null
 
@@ -64,4 +66,11 @@ class Profile(val player: Player) {
      * 销毁信息.
      */
     fun remove() = profiles.remove(player.name)
+
+    fun getGainMap(): MutableMap<String, Double> {
+        return mutableMapOf<String, Double>().apply {
+            this += ThermManager.getByName(currentArea)?.gainMap ?: mutableMapOf()
+            this += ThermManager.getByName(currentSeat)?.gainMap ?: mutableMapOf()
+        }
+    }
 }

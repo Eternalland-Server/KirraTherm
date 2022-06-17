@@ -4,7 +4,9 @@ import ink.ptms.zaphkiel.ZaphkielAPI
 import net.sakuragame.eternal.kirratherm.KirraThermAPI
 import net.sakuragame.eternal.kirratherm.Profile
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
-import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal
+import net.sakuragame.eternal.kirratherm.therm.data.ThermType
+import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.HEART
+import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.SCALE
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
@@ -19,7 +21,7 @@ fun getRandomDouble() = ((100..150).random() / 100).toDouble()
 
 fun getRandomInt() = (5..10).random()
 
-fun ArmorStand.isSeat() = hasMetadata(Therm.STANDALONE_SEAT_KEY) || hasMetadata(Therm.PLAYER_SEAT_KEY)
+fun ArmorStand.isSeat() = hasMetadata(ThermManager.STANDALONE_SEAT_KEY) || hasMetadata(ThermManager.PLAYER_SEAT_KEY)
 
 fun Player.isInArea(locA: Location, locB: Location) = location.isInArea(locA, locB)
 
@@ -48,23 +50,23 @@ fun ItemStack.getSeatId(): String? {
     return itemStream.getZaphkielData().getDeep("fishing.id").asString()
 }
 
-fun isAlreadySited(player: Player, therm: Therm): Boolean {
-    if (therm.data.type != ThermInternal.ThermType.PLAYER_SEAT) {
-        return Profile.profiles.values.firstOrNull { it.currentTherm == therm.name } != null
+fun isAlreadySited(player: Player, therm: ITherm): Boolean {
+    if (therm.type != ThermType.PLAYER_SEAT) {
+        return Profile.profiles.values.firstOrNull { it.currentSeat == therm.id } != null
     }
     val profile = player.getProfile() ?: return false
-    if (profile.currentTherm.isNotEmpty()) {
+    if (profile.currentSeat.isNotEmpty()) {
         return true
     }
     return false
 }
 
-fun getSitedPlayer(name: String) = Profile.profiles.values.firstOrNull { it.currentTherm == name }?.player
+fun getSitedPlayer(therm: ITherm) = Profile.profiles.values.firstOrNull { it.currentSeat == therm.id }?.player
 
 fun getStandaloneEntity(player: Player): ArmorStand? {
     return player
         .getNearbyEntities(2.0, 2.0, 2.0)
-        .firstOrNull { it.hasMetadata(Therm.STANDALONE_SEAT_KEY) && getLookingAt(player, it) } as? ArmorStand
+        .firstOrNull { it.hasMetadata(ThermManager.STANDALONE_SEAT_KEY) && getLookingAt(player, it) } as? ArmorStand
 }
 
 fun getHollowCube(locA: Location, locB: Location, particleDistance: Double): List<Location> {
@@ -98,16 +100,14 @@ fun getHollowCube(locA: Location, locB: Location, particleDistance: Double): Lis
     }
 }
 
-fun runRegenTask(player: Player, therm: Therm) {
-    val seat = therm.thermSeat!!
+fun runRegenTask(player: Player, therm: ITherm) {
     submit(async = true, period = KirraThermAPI.regenInterval) {
         if (player.isOnline && player.vehicle != null) {
             spawnParticle(player)
-            if (seat.regenHeartsPerTicks > 0.0) {
-                player.health = (therm.thermSeat.regenHeartsPerTicks + player.health).coerceAtMost(player.maxHealth)
-                return@submit
+            when (therm.regenType) {
+                HEART -> player.health = (therm.regenValue + player.health).coerceAtMost(player.maxHealth)
+                SCALE -> player.healthScale = (player.healthScale + therm.regenValue).coerceAtMost(1.0)
             }
-            player.healthScale = (player.healthScale + therm.thermSeat.regenScalePerTicks).coerceAtMost(1.0)
         } else {
             cancel()
             return@submit
@@ -117,7 +117,7 @@ fun runRegenTask(player: Player, therm: Therm) {
 
 fun runTotemParticleTask(player: Player) {
     submit(async = true, period = KirraThermAPI.particleInterval) {
-        if (Therm.getByLoc(player.location) != null && player.isOnline) {
+        if (ThermManager.getByLoc(player.location) != null && player.isOnline) {
             player.spawnParticle(Particle.TOTEM, player.location.add(0.0, 1.5, 0.0), getRandomInt())
             return@submit
         }

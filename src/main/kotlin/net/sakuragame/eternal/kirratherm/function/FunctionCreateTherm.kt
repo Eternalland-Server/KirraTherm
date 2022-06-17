@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit
 
 object FunctionCreateTherm {
 
-    val selectPoints = ArrayList<Location>().apply { for (i in 1..2) add(emptyLocation()) }
+    val selectPoints = ArrayList<Location>().apply { for (i in 1..2) add(emptyLocation) }
 
-    fun isLegalLocations(): Boolean = !selectPoints.contains(emptyLocation())
+    fun isLegalLocations(): Boolean = !selectPoints.contains(emptyLocation)
 
-    private fun emptyLocation(): Location = Bukkit.getWorlds()[0]!!.spawnLocation
+    val emptyLocation = Bukkit.getWorlds()[0]!!.spawnLocation!!
 
     private val baffle by lazy {
         Baffle.of(3, TimeUnit.MILLISECONDS)

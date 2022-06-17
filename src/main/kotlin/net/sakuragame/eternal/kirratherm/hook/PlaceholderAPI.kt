@@ -14,7 +14,7 @@ class PlaceholderAPI : taboolib.platform.compat.PlaceholderExpansion {
         val profile = player.getProfile() ?: return "__"
         when (args.lowercase()) {
             "create_mode" -> return profile.createMode.toString()
-            "current_therm" -> return profile.currentTherm
+            "current_therm" -> return profile.currentArea
             "current_therm_is_seat" -> return (profile.armorStandEntity != null).toString()
         }
         return "__"

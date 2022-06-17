@@ -9,15 +9,13 @@ import net.sakuragame.eternal.kirratherm.Profile
 import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
 import net.sakuragame.eternal.kirratherm.therm.*
-import net.sakuragame.eternal.kirratherm.therm.data.ThermInternal.ThermType.Companion.isCube
-import org.bukkit.Bukkit
+import net.sakuragame.eternal.kirratherm.therm.impl.CubeTherm
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.vehicle.VehicleEnterEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.spigotmc.event.entity.EntityMountEvent
 import taboolib.common.LifeCycle
@@ -40,26 +38,28 @@ object FunctionTherm {
         submit(async = true, period = 2L) {
             Profile.profiles.values.forEach { profile ->
                 val player = profile.player
-                Therm.getAll()
-                    .filter { it.data.type.isCube() }
-                    .filter { player.isInArea(it.data.locA!!, it.data.locB!!) && profile.currentTherm != it.name }
+                ThermManager.therms
+                    .map { it as? CubeTherm ?: return@forEach }
                     .forEach {
-                        Therm.join(player, it)
+                        if (player.isInArea(it.locationA, it.locationB) && profile.currentArea != it.id) {
+                            ThermManager.join(player, it)
+                        }
                     }
-                if (profile.armorStandEntity == null && Therm.getByLoc(player.location) == null && profile.currentTherm.isNotEmpty()) {
-                    Therm.left(player)
+                if (profile.armorStandEntity == null && ThermManager.getByLoc(player.location) == null) {
+                    if (profile.currentArea.isNotEmpty()) {
+                        ThermManager.left(player, isSeat = false)
+                    }
                 }
             }
         }
         submit(async = true, period = KirraThermAPI.thermInterval) {
             Profile.profiles.values
-                .filter { it.currentTherm.isNotEmpty() }
                 .forEach { profile ->
                     val player = profile.player
-                    val therm = Therm.getByName(profile.currentTherm) ?: return@forEach
+                    val gainMap = profile.getGainMap()
                     val permission = player.getBelongPermission() ?: "default"
                     val finalGainMap = mutableMapOf<String, Double>().also {
-                        it += therm.gainMap
+                        it += gainMap
                         it.keys.forEach { name ->
                             KirraThermAPI.multipleMap[permission]!!.forEach { data ->
                                 if (data.name == name) it[data.name] = it[data.name]!!.times(data.value)
@@ -68,9 +68,9 @@ object FunctionTherm {
                     }
                     finalGainMap.forEach gainForeach@{ (index, value) ->
                         val currency = EternalCurrency.values().find { it.identifier == index } ?: return@gainForeach
-                        GemsEconomyAPI.deposit(player.uniqueId, value, currency, "泡点奖励.")
+                        GemsEconomyAPI.deposit(player.uniqueId, value, currency)
                     }
-                    PlayerThermGainEvent(player, therm.name, finalGainMap).call()
+                    PlayerThermGainEvent(player, finalGainMap).call()
                     playActions(player, finalGainMap)
                 }
         }
@@ -84,7 +84,7 @@ object FunctionTherm {
         val player = e.player
         val entity = getStandaloneEntity(player) ?: return
         val profile = player.getProfile() ?: return
-        val therm = Therm.getNearestSeatByLoc(entity.location) ?: return
+        val therm = ThermManager.getNearestSeatByLoc(entity.location) ?: return
         if (!baffle.hasNext(player.name)) {
             return
         }
@@ -95,7 +95,7 @@ object FunctionTherm {
         profile.armorStandEntity = entity.apply {
             addPassenger(player)
         }
-        Therm.join(player, therm)
+        ThermManager.join(player, therm)
     }
 
     @SubscribeEvent
@@ -108,7 +108,7 @@ object FunctionTherm {
         val player = e.player
         val profile = player.getProfile() ?: return
         val seatId = item.getSeatId() ?: return
-        val therm = Therm.getByName(seatId) ?: return
+        val therm = ThermManager.getByName(seatId) ?: return
         val clickedBlock = e.clickedBlock ?: return
         if (!isAllowedToRideSeat(therm, player)) {
             return
@@ -120,7 +120,7 @@ object FunctionTherm {
             seatId,
             player
         )
-        Therm.join(player, therm)
+        ThermManager.join(player, therm)
     }
 
     @SubscribeEvent
@@ -170,9 +170,9 @@ object FunctionTherm {
         }
     }
 
-    private fun isAllowedToRideSeat(therm: Therm, player: Player): Boolean {
+    private fun isAllowedToRideSeat(therm: ITherm, player: Player): Boolean {
         if (isAlreadySited(player, therm)) {
-            if (getSitedPlayer(therm.name)?.uniqueId == player.uniqueId) {
+            if (getSitedPlayer(therm)?.uniqueId == player.uniqueId) {
                 return false
             }
             player.sendLang("message-player-already-sit")
@@ -209,13 +209,13 @@ object FunctionTherm {
     private fun removePlayerSeat(player: Player) {
         val profile = player.getProfile() ?: return
         val entity = profile.armorStandEntity ?: return
-        val isStandalone = entity.hasMetadata(Therm.STANDALONE_SEAT_KEY)
+        val isStandalone = entity.hasMetadata(ThermManager.STANDALONE_SEAT_KEY)
         if (isStandalone) {
             entity.removePassenger(player)
         } else {
             entity.remove()
         }
         profile.armorStandEntity = null
-        Therm.left(player, true)
+        ThermManager.left(player, isSeat = true)
     }
 }
