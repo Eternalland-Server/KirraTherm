@@ -34,6 +34,10 @@ object ThermManager {
 
     val tasks = mutableListOf<PlatformExecutor.PlatformTask>()
 
+    inline fun <reified T : ITherm> getByType(): List<T> {
+        return therms.filterIsInstance(T::class.java)
+    }
+
     fun getByName(name: String) = therms.find { it.id == name }
 
     fun getByLoc(loc: Location): CubeTherm? {
@@ -83,17 +87,23 @@ object ThermManager {
                     therms += therm
                     debug("已开始播放 ${therm.id} 的特效.")
                 }
+
                 STANDALONE_SEAT, PLAYER_SEAT -> {
                     val entityName = file.getString("data.$id.entity-name") ?: return@forEach
                     val therm = when (type == STANDALONE_SEAT) {
-                        false -> PlayerSeatTherm(
-                            id = id,
-                            gainMap = gainMap,
-                            entityName = entityName,
-                            regenType = regenType,
-                            delayToRegen = delayToRegen,
-                            regenValue = regenValue
-                        )
+                        false -> {
+                            val itemId = file.getString("data.$id.item-id") ?: return@forEach
+                            PlayerSeatTherm(
+                                id = id,
+                                gainMap = gainMap,
+                                entityName = entityName,
+                                itemId = itemId,
+                                regenType = regenType,
+                                delayToRegen = delayToRegen,
+                                regenValue = regenValue
+                            )
+                        }
+
                         true -> {
                             val loc = file.getString("data.$id.loc")?.parseToLoc() ?: return@forEach
                             StandaloneSeatTherm(
@@ -151,6 +161,7 @@ object ThermManager {
                 player.sendTitle("", player.asLangText("message-player-join-therm", 0, 25, 0))
                 runTotemParticleTask(player)
             }
+
             STANDALONE_SEAT, PLAYER_SEAT -> {
                 profile.currentSeat = therm.id
                 player.sendTitle("", player.asLangText("message-player-sits-on-seat", therm.id))

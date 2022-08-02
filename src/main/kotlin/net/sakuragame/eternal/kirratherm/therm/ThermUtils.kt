@@ -7,6 +7,7 @@ import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.therm.data.ThermType
 import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.HEART
 import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.SCALE
+import net.sakuragame.eternal.kirratherm.therm.impl.PlayerSeatTherm
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
@@ -32,7 +33,7 @@ fun Location.isInArea(locA: Location, locB: Location): Boolean {
     return (x - locA.x) * (x - locB.x) <= 0.0 && (y - locA.y) * (y - locB.y) <= 0.0 && (z - locA.z) * (z - locB.z) <= 0.0
 }
 
-fun Player.getBelongPermission() = KirraThermAPI.multipleMap.keys.firstOrNull { it != "default" && hasPermission(it) }
+fun Player.getBelongPermission() = KirraThermAPI.multipleMap.keys.find { it != "default" && hasPermission(it) }
 
 fun ItemStack.isSeat(): Boolean {
     return getSeatId() != null
@@ -44,10 +45,12 @@ fun ItemStack.getSeatId(): String? {
     if (itemStream.isVanilla()) {
         return null
     }
-    if (itemStream.getZaphkielData().getDeep("fishing.id") == null) {
-        return null
+    val name = itemStream.getZaphkielName()
+    val bool = ThermManager.getByType<PlayerSeatTherm>().find { it.itemId == name } != null
+    return when {
+        bool -> name
+        else -> null
     }
-    return itemStream.getZaphkielData().getDeep("fishing.id").asString()
 }
 
 fun isAlreadySited(player: Player, therm: ITherm): Boolean {

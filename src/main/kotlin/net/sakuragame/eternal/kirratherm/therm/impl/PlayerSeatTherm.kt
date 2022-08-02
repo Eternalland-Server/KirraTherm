@@ -8,7 +8,8 @@ class PlayerSeatTherm(
     override val id: String,
     override val gainMap: MutableMap<String, Double>,
 
-    private val entityName: String,
+    val entityName: String,
+    val itemId: String,
 
     override val regenType: RegenType,
     override val delayToRegen: Long,
