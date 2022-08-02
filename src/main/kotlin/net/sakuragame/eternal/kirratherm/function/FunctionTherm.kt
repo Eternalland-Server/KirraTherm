@@ -10,6 +10,7 @@ import net.sakuragame.eternal.kirratherm.Profile.Companion.getProfile
 import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.impl.CubeTherm
+import net.sakuragame.eternal.kirratherm.therm.impl.PlayerSeatTherm
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
@@ -110,7 +111,8 @@ object FunctionTherm {
         val player = e.player
         val profile = player.getProfile() ?: return
         val seatId = item.getSeatId() ?: return
-        val therm = ThermManager.getByName(seatId) ?: return
+        val therm = ThermManager.getByType<PlayerSeatTherm>().find { it.itemId == seatId } ?: return
+        val entityName = therm.entityName
         val clickedBlock = e.clickedBlock ?: return
         if (!isAllowedToRideSeat(therm, player)) {
             return
@@ -119,7 +121,7 @@ object FunctionTherm {
             clickedBlock.location
                 .add(0.0, 1.0, 0.0)
                 .setDirection(player.location.direction),
-            seatId,
+            entityName,
             player
         )
         ThermManager.join(player, therm)

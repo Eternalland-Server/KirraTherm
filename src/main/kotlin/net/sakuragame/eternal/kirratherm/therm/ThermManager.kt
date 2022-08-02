@@ -87,7 +87,6 @@ object ThermManager {
                     therms += therm
                     debug("已开始播放 ${therm.id} 的特效.")
                 }
-
                 STANDALONE_SEAT, PLAYER_SEAT -> {
                     val entityName = file.getString("data.$id.entity-name") ?: return@forEach
                     val therm = when (type == STANDALONE_SEAT) {
@@ -103,7 +102,6 @@ object ThermManager {
                                 regenValue = regenValue
                             )
                         }
-
                         true -> {
                             val loc = file.getString("data.$id.loc")?.parseToLoc() ?: return@forEach
                             StandaloneSeatTherm(

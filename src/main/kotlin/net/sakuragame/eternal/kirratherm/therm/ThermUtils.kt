@@ -8,6 +8,7 @@ import net.sakuragame.eternal.kirratherm.therm.data.ThermType
 import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.HEART
 import net.sakuragame.eternal.kirratherm.therm.data.sub.RegenType.SCALE
 import net.sakuragame.eternal.kirratherm.therm.impl.PlayerSeatTherm
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
