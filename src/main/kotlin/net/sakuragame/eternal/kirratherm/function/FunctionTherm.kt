@@ -11,7 +11,8 @@ import net.sakuragame.eternal.kirratherm.event.PlayerThermGainEvent
 import net.sakuragame.eternal.kirratherm.therm.*
 import net.sakuragame.eternal.kirratherm.therm.impl.CubeTherm
 import net.sakuragame.eternal.kirratherm.therm.impl.PlayerSeatTherm
-import org.bukkit.Bukkit
+import net.sakuragame.eternal.kirratherm.toCenter
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerDropItemEvent
@@ -114,12 +115,26 @@ object FunctionTherm {
         val therm = ThermManager.getByType<PlayerSeatTherm>().find { it.itemId == seatId } ?: return
         val entityName = therm.entityName
         val clickedBlock = e.clickedBlock ?: return
+        val aboveBlock = clickedBlock.location.clone().add(0.0, 1.0, 0.0).block
+        if (aboveBlock.type != Material.AIR) {
+            e.isCancelled = true
+            return
+        }
+        if (clickedBlock.location.distanceSquared(player.location) > 16) {
+            return
+        }
         if (!isAllowedToRideSeat(therm, player)) {
             return
         }
+        val yOffset = when {
+            clickedBlock.type == Material.CARPET -> 0.0
+            clickedBlock.type.toString().contains("STEP") -> 0.5
+            else -> 1.0
+        }
         profile.armorStandEntity = KirraThermAPI.generateSitEntity(
             clickedBlock.location
-                .add(0.0, 1.0, 0.0)
+                .toCenter(0.5)
+                .add(0.0, yOffset, 0.0)
                 .setDirection(player.location.direction),
             entityName,
             player
@@ -186,10 +201,10 @@ object FunctionTherm {
             return false
         }
         if (!baffle.hasNext(player.name)) {
+            player.sendLang("message-player-baffle")
             return false
         }
         baffle.next(player.name)
-        player.sendLang("message-player-baffle")
         return true
     }
 

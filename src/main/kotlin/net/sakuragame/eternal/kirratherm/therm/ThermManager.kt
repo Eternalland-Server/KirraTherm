@@ -22,6 +22,7 @@ import taboolib.common.platform.Awake
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
 import taboolib.module.chat.colored
+import taboolib.module.configuration.util.getStringColored
 import taboolib.platform.util.asLangText
 
 @Suppress("SpellCheckingInspection")
@@ -88,7 +89,7 @@ object ThermManager {
                     debug("已开始播放 ${therm.id} 的特效.")
                 }
                 STANDALONE_SEAT, PLAYER_SEAT -> {
-                    val entityName = file.getString("data.$id.entity-name") ?: return@forEach
+                    val entityName = file.getStringColored("data.$id.entity-name") ?: return@forEach
                     val therm = when (type == STANDALONE_SEAT) {
                         false -> {
                             val itemId = file.getString("data.$id.item-id") ?: return@forEach

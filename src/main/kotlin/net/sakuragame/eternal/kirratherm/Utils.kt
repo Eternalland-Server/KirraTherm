@@ -23,3 +23,7 @@ fun String.parseToLoc(): Location? {
     val pitch = split[5].toFloatOrNull() ?: return null
     return Location(world, x, y, z, yaw, pitch)
 }
+
+fun Location.toCenter(offset: Double): Location {
+    return Location(world, blockX + offset, blockY.toDouble(), blockZ + offset)
+}
