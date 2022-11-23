@@ -209,9 +209,9 @@ object FunctionTherm {
     }
 
     private fun playActions(player: Player, gainMap: MutableMap<String, Double>) {
-        KirraThermAPI.actionMessage.forEachIndexed { index, str ->
-            MessageAPI.setCrossHairTip(player, index + 1, toReplaced(str, player, gainMap))
-        }
+//        KirraThermAPI.actionMessage.forEachIndexed { index, str ->
+//            MessageAPI.setCrossHairTip(player, index + 1, toReplaced(str, player, gainMap))
+//        }
     }
 
     private fun toReplaced(str: String, player: Player, gainMap: MutableMap<String, Double>): String {
